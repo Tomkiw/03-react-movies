@@ -1,23 +1,57 @@
-import { useEffect, useState } from "react";
+import css from "./App.module.css";
+import { useState } from "react";
+import type { Movie } from "../../types/movie";
+import { fetchMovies } from "../../service/movieService";
+import SearchBar from "../SearchBar/SearchBar";
+import MovieGrid from "../MovieGrid/MovieGrid";
+import MovieModal from "../MovieModal/MovieModal";
+import ErrorMessage from "../ErrorMessage/ErrorMessage";
+import Loader from "../Loader/Loader";
+import toast, { Toaster } from "react-hot-toast";
 
-export default function Timer() {
-  const [time, setTime] = useState(new Date());
+export default function App() {
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isError, setIsError] = useState<boolean>(false);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null); // state modal window! if close = null
 
-  useEffect(() => {
-    // 1. Зберігаєм ідентифікатор інтервалу в змінну
+  const handleSearch = async (topic: string) => {
+    setMovies([]); //Очищає попередні результати пошуку
+    setIsError(false); //Скидає помилку
+    setIsLoading(true); // Вмикає індикатор завантаження Лоадер
 
-    const intervalId = setInterval(() => {
-      setTime(new Date());
+    try {
+      const data = await fetchMovies(topic);
 
-      console.log(`Interval - ${Date.now()}`);
-    }, 1000);
+      if (data.length === 0) {
+        toast.error("No movies found for your request."); //Показуємо сповіщення
+      } else {
+        setMovies(data);
+      }
+    } catch {
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    return () => {
-      // 2. Видаляємо інтервал за його id
-
-      clearInterval(intervalId);
-    };
-  }, []);
-
-  return <p>TimerBox - {time.toLocaleTimeString()}</p>;
+  return (
+    <div className={css.app}>
+      <SearchBar onSubmit={handleSearch} />
+      {/* onSubmit={handleSearch} — це пропс, через який App дає SearchBar-у 
+          функцію, щоб SearchBar міг передати текст пошуку наверх */}
+      {isLoading && <Loader />}
+      {isError && <ErrorMessage />}
+      {movies.length > 0 && (
+        <MovieGrid movies={movies} onSelect={setSelectedMovie} />
+      )}
+      {selectedMovie !== null && (
+        <MovieModal
+          movie={selectedMovie}
+          onClose={() => setSelectedMovie(null)}
+        />
+      )}
+      <Toaster />
+    </div>
+  );
 }
