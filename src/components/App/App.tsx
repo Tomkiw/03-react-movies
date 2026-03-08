@@ -1,7 +1,7 @@
 import css from "./App.module.css";
 import { useState } from "react";
 import type { Movie } from "../../types/movie";
-import { fetchMovies } from "../../service/movieService";
+import { fetchMovies } from "../../services/movieService";
 import SearchBar from "../SearchBar/SearchBar";
 import MovieGrid from "../MovieGrid/MovieGrid";
 import MovieModal from "../MovieModal/MovieModal";
